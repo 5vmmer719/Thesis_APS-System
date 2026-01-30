@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.order.ProductionOrderMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.aps.entity.order.ProductionOrder">
+        <id column="id" property="id"/>
+        <result column="prod_no" property="prodNo"/>
+        <result column="sales_id" property="salesId"/>
+        <result column="order_kind" property="orderKind"/>
+        <result column="model_id" property="modelId"/>
+        <result column="bom_id" property="bomId"/>
+        <result column="route_version" property="routeVersion"/>
+        <result column="qty" property="qty"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 包含关联信息的结果映射 -->
+    <resultMap id="WithRelationsResultMap" type="com.aps.entity.order.ProductionOrder" extends="BaseResultMap">
+        <result column="sales_no" property="salesNo"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+        <result column="bom_code" property="bomCode"/>
+    </resultMap>
+
+    <!-- 包含属性的结果映射 -->
+    <resultMap id="WithAttrsResultMap" type="com.aps.entity.order.ProductionOrder" extends="WithRelationsResultMap">
+        <collection property="attrs" ofType="com.aps.entity.order.ProductionOrderAttr">
+            <id column="attr_id" property="id"/>
+            <result column="attr_ord_id" property="ordId"/>
+            <result column="attr_key" property="attrKey"/>
+            <result column="attr_value" property="attrValue"/>
+            <result column="attr_remark" property="remark"/>
+            <result column="attr_created_time" property="createdTime"/>
+            <result column="attr_created_by" property="createdBy"/>
+            <result column="attr_updated_time" property="updatedTime"/>
+            <result column="attr_updated_by" property="updatedBy"/>
+        </collection>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, prod_no, sales_id, order_kind, model_id, bom_id, route_version,
+        qty, due_date, priority, status, remark,
+        created_time, created_by, updated_time, updated_by, deleted
+    </sql>
+
+    <!-- 根据订单号查询（包含关联信息） -->
+    <select id="selectByNoWithRelations" resultMap="WithRelationsResultMap">
+        SELECT
+            po.id,
+            po.prod_no,
+            po.sales_id,
+            po.order_kind,
+            po.model_id,
+            po.bom_id,
+            po.route_version,
+            po.qty,
+            po.due_date,
+            po.priority,
+            po.status,
+            po.remark,
+            po.created_time,
+            po.created_by,
+            po.updated_time,
+            po.updated_by,
+            po.deleted,
+            so.sales_no,
+            m.model_code,
+            m.model_name,
+            b.bom_code
+        FROM ord_prod po
+                 LEFT JOIN ord_sales so ON po.sales_id = so.id AND so.deleted = 0
+                 LEFT JOIN md_model m ON po.model_id = m.id AND m.deleted = 0
+                 LEFT JOIN md_bom b ON po.bom_id = b.id AND b.deleted = 0
+        WHERE po.prod_no = #{prodNo}
+          AND po.deleted = 0
+    </select>
+
+    <!-- 检查订单号是否存在 -->
+    <select id="existsByProdNo" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM ord_prod
+        WHERE prod_no = #{prodNo}
+          AND deleted = 0
+    </select>
+
+    <!-- 根据ID查询（包含属性） -->
+    <select id="selectByIdWithAttrs" resultMap="WithAttrsResultMap">
+        SELECT
+            po.id,
+            po.prod_no,
+            po.sales_id,
+            po.order_kind,
+            po.model_id,
+            po.bom_id,
+            po.route_version,
+            po.qty,
+            po.due_date,
+            po.priority,
+            po.status,
+            po.remark,
+            po.created_time,
+            po.created_by,
+            po.updated_time,
+            po.updated_by,
+            po.deleted,
+            so.sales_no,
+            m.model_code,
+            m.model_name,
+            b.bom_code,
+            pa.id AS attr_id,
+            pa.ord_id AS attr_ord_id,
+            pa.attr_key,
+            pa.attr_value,
+            pa.remark AS attr_remark,
+            pa.created_time AS attr_created_time,
+            pa.created_by AS attr_created_by,
+            pa.updated_time AS attr_updated_time,
+            pa.updated_by AS attr_updated_by
+        FROM ord_prod po
+                 LEFT JOIN ord_sales so ON po.sales_id = so.id AND so.deleted = 0
+                 LEFT JOIN md_model m ON po.model_id = m.id AND m.deleted = 0
+                 LEFT JOIN md_bom b ON po.bom_id = b.id AND b.deleted = 0
+                 LEFT JOIN ord_prod_attr pa ON po.id = pa.ord_id AND pa.deleted = 0
+        WHERE po.id = #{id}
+          AND po.deleted = 0
+        ORDER BY pa.created_time
+    </select>
+
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.order.SalesOrderMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.aps.entity.order.SalesOrder">
+        <id column="id" property="id"/>
+        <result column="sales_no" property="salesNo"/>
+        <result column="customer_code" property="customerCode"/>
+        <result column="model_id" property="modelId"/>
+        <result column="qty" property="qty"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="source_payload" property="sourcePayload"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 包含车型信息的结果映射 -->
+    <resultMap id="WithModelResultMap" type="com.aps.entity.order.SalesOrder" extends="BaseResultMap">
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, sales_no, customer_code, model_id, qty, due_date, priority,
+        status, source_payload, remark,
+        created_time, created_by, updated_time, updated_by, deleted
+    </sql>
+
+    <!-- 根据订单号查询（包含车型信息） -->
+    <select id="selectByNoWithModel" resultMap="WithModelResultMap">
+        SELECT
+            so.id,
+            so.sales_no,
+            so.customer_code,
+            so.model_id,
+            so.qty,
+            so.due_date,
+            so.priority,
+            so.status,
+            so.source_payload,
+            so.remark,
+            so.created_time,
+            so.created_by,
+            so.updated_time,
+            so.updated_by,
+            so.deleted,
+            m.model_code,
+            m.model_name
+        FROM ord_sales so
+                 LEFT JOIN md_model m ON so.model_id = m.id AND m.deleted = 0
+        WHERE so.sales_no = #{salesNo}
+          AND so.deleted = 0
+    </select>
+
+    <!-- 检查订单号是否存在 -->
+    <select id="existsBySalesNo" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM ord_sales
+        WHERE sales_no = #{salesNo}
+          AND deleted = 0
+    </select>
+
+</mapper>

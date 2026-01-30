@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.schedule.SchPlanBucketMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.aps.entity.schedule.SchPlanBucket">
+        <id column="id" property="id"/>
+        <result column="plan_id" property="planId"/>
+        <result column="process_type" property="processType"/>
+        <result column="line_id" property="lineId"/>
+        <result column="biz_date" property="bizDate"/>
+        <result column="shift_code" property="shiftCode"/>
+        <result column="prod_order_id" property="prodOrderId"/>
+        <result column="seq_no" property="seqNo"/>
+        <result column="qty" property="qty"/>
+        <result column="from_setup_key" property="fromSetupKey"/>
+        <result column="to_setup_key" property="toSetupKey"/>
+        <result column="setup_minutes" property="setupMinutes"/>
+        <result column="setup_cost" property="setupCost"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, plan_id, process_type, line_id, biz_date, shift_code, prod_order_id, seq_no, qty,
+        from_setup_key, to_setup_key, setup_minutes, setup_cost, remark,
+        created_time, created_by, updated_time, updated_by, deleted
+    </sql>
+
+</mapper>
+

@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package aps.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aps.grpc.proto";
+option java_outer_classname = "ApsProto";
+
+// ========== 服务定义 ==========
+
+service ApsService {
+  // 同步求解（阻塞等待结果）
+  rpc Solve(SolveRequest) returns (SolveResponse);
+  
+  // 异步任务提交
+  rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+  
+  // 查询任务状态
+  rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+  
+  // 列出所有任务
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+}
+
+// ========== 同步求解接口 ==========
+
+message SolveRequest {
+  string request_id = 1;                // 请求唯一标识
+  int64 plan_start_epoch_ms = 2;        // 排产起始时间（毫秒时间戳）
+  repeated Job jobs = 3;                // 待排产订单列表
+  SolveParams params = 4;               // 求解参数
+}
+
+message Job {
+  string vin = 1;                       // 车辆识别码/订单号
+  int64 due_epoch_ms = 2;               // 交期（毫秒时间戳）
+  int32 stamping_minutes = 3;           // 冲压工时（分钟）
+  int32 welding_minutes = 4;            // 焊装工时（分钟）
+  int32 painting_minutes = 5;           // 涂装工时（分钟）
+  int32 assemble_minutes = 6;           // 总装工时（分钟）
+  string mold_code = 7;                 // 模具编码（冲压换型键）
+  string welding_fixture = 8;           // 焊装夹具（焊装换型键）
+  string color = 9;                     // 颜色编码（涂装换型键）
+  string config = 10;                   // 配置编码（总装换型键）
+  double energy_score = 11;             // 能耗分值
+  double emission_score = 12;           // 排放分值
+}
+
+message SolveParams {
+  string algorithm = 1;                 // 算法选择: baseline/sa/hybrid
+  int32 time_budget_sec = 2;            // 求解时间预算（秒）
+  int64 seed = 3;                       // 随机种子
+  Weights weights = 4;                  // 目标权重
+  Limits limits = 5;                    // 资源限制
+}
+
+message Weights {
+  double tardiness = 1;                 // 延迟惩罚权重
+  double color_change = 2;              // 颜色切换权重
+  double config_change = 3;             // 配置切换权重
+  double energy_excess = 4;             // 能耗超限权重
+  double emission_excess = 5;           // 排放超限权重
+  double material_shortage = 6;         // 物料短缺权重
+}
+
+message Limits {
+  double max_energy_per_shift = 1;      // 班次能耗上限
+  double max_emission_per_shift = 2;    // 班次排放上限
+}
+
+message SolveResponse {
+  string request_id = 1;                // 请求ID（回显）
+  KpiSummary summary = 2;               // 优化方案KPI
+  KpiSummary baseline_summary = 3;      // 基准方案KPI
+  repeated string order = 4;            // 排产顺序（VIN列表）
+  repeated ScheduleItem schedule = 5;   // 简化调度表
+  repeated ScheduleItem detailed_schedule = 6; // 详细调度表
+  repeated ShiftViolation violations = 7; // 约束违反列表
+  repeated ConvergencePoint convergence = 8; // 收敛曲线
+  string engine_version = 9;            // 引擎版本号
+  repeated string warnings = 10;        // 警告信息
+}
+
+message KpiSummary {
+  double cost = 1;                      // 总成本（目标函数值）
+  int64 total_tardiness_min = 2;        // 总延迟时间（分钟）
+  int64 max_tardiness_min = 3;          // 最大延迟时间（分钟）
+  int32 color_changes = 4;              // 颜色切换次数
+  int32 config_changes = 5;             // 配置切换次数
+  double energy_excess = 6;             // 能耗超限总量
+  double emission_excess = 7;           // 排放超限总量
+  double material_shortage = 8;         // 物料短缺总量
+  int64 elapsed_ms = 9;                 // 求解耗时（毫秒）
+}
+
+message ScheduleItem {
+  int32 seq = 1;                        // 全局顺序号
+  string vin = 2;                       // 车辆识别码
+  int32 process_type = 3;               // 工艺类型（1冲压/2焊装/3涂装/4总装）
+  int64 line_id = 4;                    // 产线ID
+  int32 seq_in_shift = 5;               // 班次内顺序
+  int64 start_epoch_ms = 6;             // 开始时间（毫秒时间戳）
+  int64 end_epoch_ms = 7;               // 结束时间（毫秒时间戳）
+  int64 due_epoch_ms = 8;               // 交期（毫秒时间戳）
+  int64 tardiness_min = 9;              // 延迟时间（分钟）
+  string color = 10;                    // 颜色编码
+  string config = 11;                   // 配置编码
+  string shift_id = 12;                 // 班次ID
+}
+
+message ShiftViolation {
+  string shift_id = 1;                  // 班次ID
+  string vtype = 2;                     // 违反类型（ENERGY/EMISSION/MATERIAL）
+  double excess = 3;                    // 超限量
+}
+
+message ConvergencePoint {
+  int64 t_ms = 1;                       // 时间点（毫秒）
+  double best_cost = 2;                 // 当前最优成本
+}
+
+// ========== 异步任务接口 ==========
+
+message SubmitJobRequest {
+  SolveRequest request = 1;             // 求解请求
+}
+
+message SubmitJobResponse {
+  string job_id = 1;                    // 任务ID（UUID格式）
+  string message = 2;                   // 提交结果消息
+}
+
+message GetJobStatusRequest {
+  string job_id = 1;                    // 任务ID
+}
+
+message GetJobStatusResponse {
+  string job_id = 1;                    // 任务ID
+  string status = 2;                    // 状态: QUEUED/RUNNING/COMPLETED/FAILED
+  int64 created_at = 3;                 // 创建时间（Unix秒）
+  int64 updated_at = 4;                 // 更新时间（Unix秒）
+  SolveResponse result = 5;             // 求解结果（仅COMPLETED时有值）
+  string error_message = 6;             // 错误信息（仅FAILED时有值）
+  string engine_version = 7;            // 引擎版本
+}
+
+message ListJobsRequest {
+  int32 limit = 1;                      // 返回数量限制（0表示不限制）
+}
+
+message ListJobsResponse {
+  repeated JobInfo jobs = 1;            // 任务信息列表
+}
+
+message JobInfo {
+  string job_id = 1;                    // 任务ID
+  string status = 2;                    // 状态
+  int64 created_at = 3;                 // 创建时间（Unix秒）
+  int64 updated_at = 4;                 // 更新时间（Unix秒）
+}
+

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.schedule.SchWipLinkMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.aps.entity.schedule.SchWipLink">
+        <id column="id" property="id"/>
+        <result column="prod_order_id" property="prodOrderId"/>
+        <result column="process_type" property="processType"/>
+        <result column="plan_bucket_id" property="planBucketId"/>
+        <result column="wo_id" property="woId"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, prod_order_id, process_type, plan_bucket_id, wo_id,
+        created_time, created_by, updated_time, updated_by, deleted
+    </sql>
+
+</mapper>
+

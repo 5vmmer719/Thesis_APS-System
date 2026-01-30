@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package aps.v1;
+
+service ApsService {
+    rpc Solve(SolveRequest) returns (SolveResponse);
+    rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+    rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+    rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+}
+
+// ✅ 扩展 Job 消息（支持四大工艺）
+message Job {
+    string vin = 1;
+    int64 due_epoch_ms = 2;
+    int32 stamping_minutes = 3;
+    int32 welding_minutes = 4;
+    int32 painting_minutes = 5;
+    int32 assemble_minutes = 6;
+    string mold_code = 7;
+    string welding_fixture = 8;
+    string color = 9;
+    string config = 10;
+    double energy_score = 11;
+    double emission_score = 12;
+}
+
+message Weights {
+    double tardiness = 1;
+    double color_change = 2;
+    double config_change = 3;
+    double energy_excess = 4;
+    double emission_excess = 5;
+    double material_shortage = 6;
+}
+
+message Limits {
+    double max_energy_per_shift = 1;
+    double max_emission_per_shift = 2;
+}
+
+message SolveParams {
+    string algorithm = 1;
+    int32 time_budget_sec = 2;
+    int64 seed = 3;
+    Weights weights = 4;
+    Limits limits = 5;
+}
+
+message ShiftViolation {
+    string shift_id = 1;
+    string vtype = 2; // ENERGY/EMISSION/MATERIAL
+    double excess = 3;
+}
+
+message KpiSummary {
+    double cost = 1;
+    int64 total_tardiness_min = 2;
+    int64 max_tardiness_min = 3;
+    int32 color_changes = 4;
+    int32 config_changes = 5;
+    double energy_excess = 6;
+    double emission_excess = 7;
+    double material_shortage = 8;
+    int64 elapsed_ms = 9;
+}
+
+// ✅ 扩展 ScheduleItem 消息
+message ScheduleItem {
+    int32 seq = 1;
+    string vin = 2;
+    int32 process_type = 3;
+    int64 line_id = 4;
+    int32 seq_in_shift = 5;
+    int64 start_epoch_ms = 6;
+    int64 end_epoch_ms = 7;
+    int64 due_epoch_ms = 8;
+    int64 tardiness_min = 9;
+    string color = 10;
+    string config = 11;
+    string shift_id = 12;
+}
+
+message ConvergencePoint {
+    int64 t_ms = 1;
+    double best_cost = 2;
+}
+
+message SubmitJobRequest {
+    SolveRequest request = 1;
+}
+
+message SubmitJobResponse {
+    string job_id = 1;
+    string message = 2;
+}
+
+message GetJobStatusRequest {
+    string job_id = 1;
+}
+
+message GetJobStatusResponse {
+    string job_id = 1;
+    string status = 2; // QUEUED, RUNNING, COMPLETED, FAILED
+    int64 created_at = 3;
+    int64 updated_at = 4;
+    SolveResponse result = 5;
+    string error_message = 6;
+    string engine_version = 100;
+}
+
+message ListJobsRequest {
+    int32 limit = 1;  // 0 表示不限制
+}
+
+message ListJobsResponse {
+    repeated JobInfo jobs = 1;
+}
+
+message JobInfo {
+    string job_id = 1;
+    string status = 2;
+    int64 created_at = 3;
+    int64 updated_at = 4;
+}
+
+message SolveRequest {
+    string request_id = 1;
+    int64 plan_start_epoch_ms = 2;
+    repeated Job jobs = 3;
+    SolveParams params = 4;
+}
+message SolveResponse {
+    string request_id = 1;
+    KpiSummary summary = 2;
+    KpiSummary baseline_summary = 3;
+    repeated string order = 4;
+    repeated ScheduleItem schedule = 5;
+    repeated ScheduleItem detailed_schedule = 6;
+    repeated ShiftViolation violations = 7;
+    repeated ConvergencePoint convergence = 8;
+    string engine_version = 9;
+    repeated string warnings = 10;
+}
+

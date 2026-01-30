@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.schedule.SchPlanMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.aps.entity.schedule.SchPlan">
+        <id column="id" property="id"/>
+        <result column="job_id" property="jobId"/>
+        <result column="plan_no" property="planNo"/>
+        <result column="is_best" property="isBest"/>
+        <result column="kpi_json" property="kpiJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, job_id, plan_no, is_best, kpi_json, status, remark,
+        created_time, created_by, updated_time, updated_by, deleted
+    </sql>
+
+</mapper>
+

@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=proto/aps.proto
+cargo:rerun-if-changed=proto

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/aps-java/bootstrap/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/da/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/facade/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/grpc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/model/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aps-java/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

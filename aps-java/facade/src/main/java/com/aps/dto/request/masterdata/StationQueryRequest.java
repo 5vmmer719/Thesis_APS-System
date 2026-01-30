@@ -1,0 +1,28 @@
+package com.aps.dto.request.masterdata;
+
+
+import com.aps.request.PageRequest;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * 工位查询请求
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Schema(description = "工位查询请求")
+public class StationQueryRequest extends PageRequest {
+
+    @Schema(description = "产线ID")
+    private Long lineId;
+
+    @Schema(description = "工位编码（模糊查询）")
+    private String stationCode;
+
+    @Schema(description = "工位名称（模糊查询）")
+    private String stationName;
+
+    @Schema(description = "状态：0-禁用，1-启用")
+    private Integer status;
+}
