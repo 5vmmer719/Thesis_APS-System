@@ -47,14 +47,21 @@ public class GrpcConfig {
 
     @Bean
     public ApsServiceGrpc.ApsServiceBlockingStub apsServiceBlockingStub(ManagedChannel channel) {
-        return ApsServiceGrpc.newBlockingStub(channel)
-                .withDeadlineAfter(timeoutSeconds, TimeUnit.SECONDS);
+        // 不在这里设置 deadline,而是在每次调用时动态设置
+        return ApsServiceGrpc.newBlockingStub(channel);
     }
 
     @Bean
     public ApsServiceGrpc.ApsServiceStub apsServiceStub(ManagedChannel channel) {
-        return ApsServiceGrpc.newStub(channel)
-                .withDeadlineAfter(timeoutSeconds, TimeUnit.SECONDS);
+        // 不在这里设置 deadline,而是在每次调用时动态设置
+        return ApsServiceGrpc.newStub(channel);
+    }
+
+    /**
+     * 获取超时时间配置(秒)
+     */
+    public long getTimeoutSeconds() {
+        return timeoutSeconds;
     }
 
     @PreDestroy

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.plan.MrpItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.aps.entity.plan.MrpItem">
+        <id column="id" property="id"/>
+        <result column="mrp_id" property="mrpId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="req_date" property="reqDate"/>
+        <result column="req_qty" property="reqQty"/>
+        <result column="supply_qty" property="supplyQty"/>
+        <result column="shortage_qty" property="shortageQty"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <resultMap id="WithItemResultMap" type="com.aps.entity.plan.MrpItem" extends="BaseResultMap">
+        <result column="item_name" property="itemName"/>
+        <result column="item_type" property="itemType"/>
+        <result column="uom" property="uom"/>
+    </resultMap>
+
+    <select id="selectListWithItem" resultMap="WithItemResultMap">
+        SELECT
+            i.id,
+            i.mrp_id,
+            i.item_code,
+            i.req_date,
+            i.req_qty,
+            i.supply_qty,
+            i.shortage_qty,
+            i.created_time,
+            i.created_by,
+            i.updated_time,
+            i.updated_by,
+            m.item_name,
+            m.item_type,
+            m.uom
+        FROM plan_mrp_item i
+        LEFT JOIN md_item m ON i.item_code = m.item_code
+        WHERE i.mrp_id = #{mrpId}
+          AND i.deleted = 0
+        ORDER BY i.req_date, i.item_code
+    </select>
+
+</mapper>
+

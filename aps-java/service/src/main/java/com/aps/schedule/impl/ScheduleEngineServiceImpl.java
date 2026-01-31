@@ -51,6 +51,7 @@ public class ScheduleEngineServiceImpl implements ScheduleEngineService {
     private final ProductionOrderAttrMapper productionOrderAttrMapper;
     private final ModelMapper modelMapper;
     private final LineMapper lineMapper;
+    private final com.aps.masterdata.SetupMatrixService setupMatrixService;
 
     @Override
     public SolveRequest buildSolveRequest(SchJob job) {
@@ -458,6 +459,9 @@ public class ScheduleEngineServiceImpl implements ScheduleEngineService {
             items = response.getScheduleList(); // 如果没有详细调度表，使用简化版
         }
 
+        // 用于存储每个产线上一个订单的换型键，以计算换型时间
+        Map<String, String> lastSetupKeyByLineProcess = new HashMap<>();
+
         for (ScheduleItem item : items) {
             SchPlanBucket bucket = new SchPlanBucket();
             bucket.setPlanId(planId);
@@ -482,9 +486,99 @@ public class ScheduleEngineServiceImpl implements ScheduleEngineService {
             bucket.setProdOrderId(orderId);
             
             bucket.setQty(1); // 数量为整数
-            bucket.setSetupMinutes(0); // TODO: 计算换型时间
+            
+            // 计算换型时间
+            String currentSetupKey = getSetupKeyFromScheduleItem(item, orderId);
+            String lineProcessKey = item.getLineId() + "_" + item.getProcessType();
+            String lastSetupKey = lastSetupKeyByLineProcess.get(lineProcessKey);
+            
+            int setupMinutes = 0;
+            BigDecimal setupCost = BigDecimal.ZERO;
+            
+            if (lastSetupKey != null && !lastSetupKey.equals(currentSetupKey)) {
+                // 查询换型矩阵获取换型时间
+                setupMinutes = setupMatrixService.getSetupMinutes(
+                        item.getProcessType(),
+                        lastSetupKey,
+                        currentSetupKey
+                );
+                
+                // 记录源键和目标键
+                bucket.setFromSetupKey(lastSetupKey);
+                bucket.setToSetupKey(currentSetupKey);
+                
+                log.debug("计算换型时间: processType={}, line={}, from={}, to={}, minutes={}",
+                        item.getProcessType(), item.getLineId(), lastSetupKey, currentSetupKey, setupMinutes);
+            } else {
+                // 第一个订单或相同换型键，无需换型
+                bucket.setToSetupKey(currentSetupKey);
+            }
+            
+            bucket.setSetupMinutes(setupMinutes);
+            bucket.setSetupCost(setupCost);
+            
+            // 更新该产线的最后换型键
+            lastSetupKeyByLineProcess.put(lineProcessKey, currentSetupKey);
             
             schPlanBucketMapper.insert(bucket);
+        }
+    }
+
+    /**
+     * 从调度项中获取换型键
+     * 根据工艺类型决定使用哪个属性作为换型键
+     * 
+     * @param item 调度项
+     * @param orderId 订单ID
+     * @return 换型键
+     */
+    private String getSetupKeyFromScheduleItem(ScheduleItem item, Long orderId) {
+        int processType = item.getProcessType();
+        
+        switch (processType) {
+            case 1: // 冲压 - 使用模具编码（从订单属性获取）
+                ProductionOrder order1 = productionOrderMapper.selectById(orderId);
+                if (order1 != null) {
+                    // 加载订单属性
+                    LambdaQueryWrapper<ProductionOrderAttr> wrapper1 = new LambdaQueryWrapper<>();
+                    wrapper1.eq(ProductionOrderAttr::getOrdId, orderId)
+                           .eq(ProductionOrderAttr::getDeleted, 0);
+                    List<ProductionOrderAttr> attrs1 = productionOrderAttrMapper.selectList(wrapper1);
+                    order1.setAttrs(attrs1);
+                    
+                    String moldCode = getOrderAttrValue(order1, ProductionOrderAttr.AttrKey.MOLD_CODE);
+                    if (moldCode != null && !moldCode.trim().isEmpty()) {
+                        return moldCode.trim();
+                    }
+                }
+                return "DEFAULT_MOLD";
+                
+            case 2: // 焊装 - 使用夹具（从订单属性获取）
+                ProductionOrder order2 = productionOrderMapper.selectById(orderId);
+                if (order2 != null) {
+                    LambdaQueryWrapper<ProductionOrderAttr> wrapper2 = new LambdaQueryWrapper<>();
+                    wrapper2.eq(ProductionOrderAttr::getOrdId, orderId)
+                           .eq(ProductionOrderAttr::getDeleted, 0);
+                    List<ProductionOrderAttr> attrs2 = productionOrderAttrMapper.selectList(wrapper2);
+                    order2.setAttrs(attrs2);
+                    
+                    String fixture = getOrderAttrValue(order2, ProductionOrderAttr.AttrKey.FIXTURE);
+                    if (fixture != null && !fixture.trim().isEmpty()) {
+                        return fixture.trim();
+                    }
+                }
+                return "DEFAULT_FIXTURE";
+                
+            case 3: // 涂装 - 使用颜色（从ScheduleItem获取）
+                String color = item.getColor();
+                return (color != null && !color.isEmpty()) ? color : "DEFAULT_COLOR";
+                
+            case 4: // 总装 - 使用配置（从ScheduleItem获取）
+                String config = item.getConfig();
+                return (config != null && !config.isEmpty()) ? config : "DEFAULT_CONFIG";
+                
+            default:
+                return "DEFAULT";
         }
     }
 

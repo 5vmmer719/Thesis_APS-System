@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
 
 /**
  * 排产引擎 gRPC 客户端
@@ -20,6 +21,7 @@ public class ScheduleEngineClient {
 
     private final ApsServiceBlockingStub blockingStub;
     private final ApsServiceStub asyncStub;
+    private final GrpcConfig grpcConfig;
 
 
     /**
@@ -35,7 +37,10 @@ public class ScheduleEngineClient {
         
         try {
             long startTime = System.currentTimeMillis();
-            SolveResponse response = blockingStub.solve(request);
+            // 为每次调用动态设置 deadline
+            SolveResponse response = blockingStub
+                    .withDeadlineAfter(grpcConfig.getTimeoutSeconds(), TimeUnit.SECONDS)
+                    .solve(request);
             long elapsed = System.currentTimeMillis() - startTime;
             
             log.info("gRPC Solve 调用成功, requestId={}, 耗时={}ms, cost={}", 
@@ -66,7 +71,10 @@ public class ScheduleEngineClient {
                     .setRequest(request)
                     .build();
             
-            SubmitJobResponse response = blockingStub.submitJob(submitRequest);
+            // 为每次调用动态设置 deadline
+            SubmitJobResponse response = blockingStub
+                    .withDeadlineAfter(grpcConfig.getTimeoutSeconds(), TimeUnit.SECONDS)
+                    .submitJob(submitRequest);
             
             log.info("gRPC SubmitJob 调用成功, jobId={}, message={}", 
                     response.getJobId(), response.getMessage());
@@ -83,8 +91,8 @@ public class ScheduleEngineClient {
      * 查询任务状态
      *
      * @param jobId 任务ID
-     * @return 任务状态响应，如果任务不存在返回 null
-     * @throws StatusRuntimeException gRPC 调用异常（NOT_FOUND 除外）
+     * @return 任务状态响应,如果任务不存在返回 null
+     * @throws StatusRuntimeException gRPC 调用异常(NOT_FOUND 除外)
      */
     public GetJobStatusResponse getJobStatus(String jobId) {
         log.debug("调用 gRPC GetJobStatus 接口, jobId={}", jobId);
@@ -94,14 +102,17 @@ public class ScheduleEngineClient {
                     .setJobId(jobId)
                     .build();
             
-            GetJobStatusResponse response = blockingStub.getJobStatus(request);
+            // 为每次调用动态设置 deadline
+            GetJobStatusResponse response = blockingStub
+                    .withDeadlineAfter(grpcConfig.getTimeoutSeconds(), TimeUnit.SECONDS)
+                    .getJobStatus(request);
             
             log.debug("gRPC GetJobStatus 调用成功, jobId={}, status={}", 
                     jobId, response.getStatus());
             
             return response;
         } catch (StatusRuntimeException e) {
-            // 如果是 NOT_FOUND，记录警告并返回 null，不抛出异常
+            // 如果是 NOT_FOUND,记录警告并返回 null,不抛出异常
             if (e.getStatus().getCode() == io.grpc.Status.Code.NOT_FOUND) {
                 log.warn("任务不存在或已被清理, jobId={}, message={}", jobId, e.getStatus().getDescription());
                 return null;
@@ -117,7 +128,7 @@ public class ScheduleEngineClient {
     /**
      * 列出所有任务
      *
-     * @param limit 返回数量限制（0表示不限制）
+     * @param limit 返回数量限制(0表示不限制)
      * @return 任务列表响应
      * @throws StatusRuntimeException gRPC 调用异常
      */
@@ -129,7 +140,10 @@ public class ScheduleEngineClient {
                     .setLimit(limit)
                     .build();
             
-            ListJobsResponse response = blockingStub.listJobs(request);
+            // 为每次调用动态设置 deadline
+            ListJobsResponse response = blockingStub
+                    .withDeadlineAfter(grpcConfig.getTimeoutSeconds(), TimeUnit.SECONDS)
+                    .listJobs(request);
             
             log.debug("gRPC ListJobs 调用成功, jobCount={}", response.getJobsCount());
             
@@ -156,4 +170,3 @@ public class ScheduleEngineClient {
         }
     }
 }
-

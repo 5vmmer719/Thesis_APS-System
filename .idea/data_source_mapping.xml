@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/aps-java/.sql/test/setup_matrix_test_data.sql" value="f392e13c-d854-40c1-9b84-20b75aeca852" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/f392e13c-d854-40c1-9b84-20b75aeca852/console.sql" value="f392e13c-d854-40c1-9b84-20b75aeca852" />
+  </component>
+</project>

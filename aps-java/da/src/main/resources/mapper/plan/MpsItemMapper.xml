@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aps.mapper.plan.MpsItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.aps.entity.plan.MpsItem">
+        <id column="id" property="id"/>
+        <result column="mps_id" property="mpsId"/>
+        <result column="biz_date" property="bizDate"/>
+        <result column="model_id" property="modelId"/>
+        <result column="qty" property="qty"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <resultMap id="WithModelResultMap" type="com.aps.entity.plan.MpsItem" extends="BaseResultMap">
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+    </resultMap>
+
+    <select id="selectListWithModel" resultMap="WithModelResultMap">
+        SELECT
+            i.id,
+            i.mps_id,
+            i.biz_date,
+            i.model_id,
+            i.qty,
+            i.created_time,
+            i.created_by,
+            i.updated_time,
+            i.updated_by,
+            m.model_code,
+            m.model_name
+        FROM plan_mps_item i
+        LEFT JOIN md_model m ON i.model_id = m.id
+        WHERE i.mps_id = #{mpsId}
+          AND i.deleted = 0
+        ORDER BY i.biz_date, i.model_id
+    </select>
+
+</mapper>
+

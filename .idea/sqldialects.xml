@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/aps-java/.sql/schema/06_plan.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/aps-java/.sql/test/setup_matrix_test_data.sql" dialect="MySQL" />
+  </component>
+</project>

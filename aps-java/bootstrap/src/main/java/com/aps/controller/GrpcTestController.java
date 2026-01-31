@@ -232,9 +232,21 @@ public class GrpcTestController {
         try {
             ListJobsResponse response = scheduleEngineClient.listJobs(limit);
             
+            // 将 Protobuf JobInfo 转换为简单 Map，避免序列化循环引用
+            java.util.List<Map<String, Object>> jobList = response.getJobsList().stream()
+                    .map(jobInfo -> {
+                        Map<String, Object> job = new HashMap<>();
+                        job.put("jobId", jobInfo.getJobId());
+                        job.put("status", jobInfo.getStatus());
+                        job.put("createdAt", jobInfo.getCreatedAt());
+                        job.put("updatedAt", jobInfo.getUpdatedAt());
+                        return job;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            
             Map<String, Object> result = new HashMap<>();
             result.put("jobCount", response.getJobsCount());
-            result.put("jobs", response.getJobsList());
+            result.put("jobs", jobList);
             
             return ApiResponse.success(result);
             
